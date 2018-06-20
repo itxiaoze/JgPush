@@ -178,7 +178,7 @@ class Push
      */
     function push()
     {
-        return HTTP::getInterface($this -> config) -> post($this -> api,$this->build)->getBody()->getContents();;
+        return HTTP::getInterface($this -> config) -> post($this -> api,$this->build)->getBody()->getContents();
     }
 
 

@@ -34,24 +34,25 @@ class HTTP
      */
     public function __construct(\Xiaoze\JgPush\Tools\Config $config)
     {
-
+        $this ->config = $config;
     }
     public function post($url,$datas)
     {
-        $this -> config -> get('appid');
-        $this -> config -> get('key');
+
         //构造所需要的参数
         $data = [
-          'auth'=>
-          [$this -> config -> get('appid'),$this -> config -> get('key'),'digest'],
             'headers'=>[
-                'Content-Type: application/json',
-                'Connection: Keep-Alive'
-            ],
+                'Content-Type'=>'application/json',
+                'Connection'=>'Keep-Alive',
+                /**
+                 * 校验
+                 */
+                'Authorization' => 'Basic '.base64_encode($this -> config ->get('appid').':'.$this -> config -> get('key'))
+            ]
         ];
         //添加body体内容
 
-        $data['body'] = $datas;
+        $data['body'] = json_encode($datas);
        return  (new Client())->request('POST',$url,$data);
     }
 

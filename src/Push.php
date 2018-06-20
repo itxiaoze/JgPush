@@ -14,7 +14,7 @@ class Push
      * 接口地址
      * @var string
      */
-    protected $api = 'https://api.jpush.cn/v3/push';
+    protected $api = 'https://bjapi.push.jiguang.cn/v3/push';
 
     /**
      * 推送平台
@@ -23,7 +23,7 @@ class Push
     /**
      * 别名
      */
-    protected $alias = [];
+    protected $alias;
     /**
      * 附加数据
      */
@@ -84,7 +84,7 @@ class Push
      *
      * @var
      */
-    private $option;
+    private $options;
 
     /**
      * 获取一个实例
@@ -102,12 +102,14 @@ class Push
      */
     function __construct(\Xiaoze\JgPush\Tools\Config $config)
     {
+
         $this -> config = $config;
+        return $this;
     }
 
-    function set_option($option)
+    function set_option($options)
     {
-        $this -> option = $option;
+        $this -> options = $options;
         return $this;
     }
     /**
@@ -178,7 +180,8 @@ class Push
      */
     function push()
     {
-        return HTTP::getInterface($this -> config) -> post($this -> api,$this->build)->getBody()->getContents();
+
+        return HTTP::getInterface($this -> config) -> post($this -> api,$this->build());
     }
 
 
@@ -194,6 +197,10 @@ class Push
        if(isset($this -> title) && !empty($this -> title))
        {
            $android['title'] = $this->title;
+       }
+       if(isset($this->alert) && !empty($this->alert))
+       {
+           $android['alert'] = $this->alert;
        }
        if(isset($this -> extras) && !empty($this -> extras))
        {
@@ -234,7 +241,7 @@ class Push
     {
 
             $message = array();
-            $message['msg_content'] = isset($this -> alert)?$this->alert:'';
+           # $message['msg_content'] = isset($this -> alert)?$this->alert:'';
            if(isset($this->title) && !empty($this->title))
            {
             $message['title'] = $this->title;
@@ -242,6 +249,10 @@ class Push
            if(isset($this->extras) && !empty($this->extras))
            {
                $message['extras'] = $this->extras;
+           }
+           if(isset($this->alert) && !empty($this->alert))
+           {
+               $message['alert'] = $this->alert;
            }
             $this->Windowsbody = $message;
 
@@ -258,8 +269,10 @@ class Push
      * @return array
      */
     public function build() {
-        $payload = array();
 
+
+
+        $payload = array();
         // validate platform
         if (is_null($this->platform)) {
             throw new InvalidArgumentException("platform must be set");
@@ -269,26 +282,23 @@ class Push
         if (!is_null($this->cid)) {
             $payload['cid'] = $this->cid;
         }
+
         if($this->platform=='all')
         {
-            $this->Windowsbody;
-            $this->iOSbody;
-            $this->Androidbody;
+            $this->set_Windowsbody();
+            $this->set_iOSbody();
+            $this->set_Androidbody();
         }
         // validate audience
         $audience = array();
-        if (!is_null($this->tags)) {
-            $audience["tag"] = $this->tags;
-        }
 
         if (!is_null($this->alias)) {
             $audience["alias"] = $this->alias;
         }
-
         if (is_null($this->audience) && count($audience) <= 0) {
-            throw new InvalidArgumentException("audience must be set");
+            throw new \Exception("audience must be set");
         } else if (!is_null($this->audience) && count($audience) > 0) {
-            throw new InvalidArgumentException("you can't add tags/alias/registration_id/tag_and when audience='all'");
+            throw new \Exception("you can't add tags/alias/registration_id/tag_and when audience='all'");
         } else if (is_null($this->audience)) {
             $payload["audience"] = $audience;
         } else {
@@ -347,13 +357,11 @@ class Push
             throw new InvalidArgumentException('notification and message can not all be null');
         }
 
-
         if (is_null($this->options)) {
-            $this->options();
+            throw new InvalidArgumentException('options  can not all be null');
         }
 
         $payload['options'] = $this->options;
-
         return $payload;
     }
 

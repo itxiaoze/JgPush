@@ -1,5 +1,7 @@
 <?php
 namespace Xiaoze\JgPush\Tools;
+use GuzzleHttp\Client;
+
 /**
  * http请求工具类
  * Class HTTP
@@ -34,11 +36,32 @@ class HTTP
     {
 
     }
-    public function post($uri,$data)
+    public function post($url,$datas)
     {
         $this -> config -> get('appid');
         $this -> config -> get('key');
+        //构造所需要的参数
+        $data = [
+          'auth'=>
+          [$this -> config -> get('appid'),$this -> config -> get('key'),'digest'],
+            'headers'=>[
+                'Content-Type: application/json',
+                'Connection: Keep-Alive'
+            ],
+        ];
+        //添加body体内容
+
+        $data['body'] = $datas;
+       return  (new Client())->request('POST',$url,$data);
     }
+
+    function set_body()
+    {
+        //获取header
+    }
+
+
+//    function
     public function get()
     {
 

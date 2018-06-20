@@ -4,7 +4,7 @@ use Xiaoze\JgPush\Tools\Config;
 use Xiaoze\JgPush\Tools\HTTP;
 
 /**
- * 推送
+ * 极光推送
  * Class Push
  * @package Xiaoze\JgPush
  */
@@ -35,13 +35,57 @@ class Push
     /**
      * 内容
      */
-    private $content = null;
+    private $alert = null;
+
+    /**
+     * 消息体
+     */
+
+    private $message;
+
+    /**
+     * 推送目标
+     * @var string
+     */
+    private $audience = 'all';
 
     /**
      * 配置实例
      * @var \Xiaoze\JgPush\Tools\Config
      */
     private $config;
+
+    /**
+     * 设置安卓发送内容
+     */
+
+    private $Androidbody;
+
+    /**
+     * 设置苹果发送内容
+     * @var
+     */
+    private $iOSbody;
+
+    /**
+     * 设置winphoen发送内容
+     * @var
+     */
+    private $Windowsbody;
+
+    /**
+     *
+     * cid
+     */
+
+    private $cid;
+
+    /**
+     *
+     * @var
+     */
+    private $option;
+
     /**
      * 获取一个实例
      * @return Push
@@ -61,6 +105,11 @@ class Push
         $this -> config = $config;
     }
 
+    function set_option($option)
+    {
+        $this -> option = $option;
+        return $this;
+    }
     /**
      * 设置推送的标题
      * @param $title
@@ -72,16 +121,242 @@ class Push
         return $this;
     }
 
+    function set_message($message)
+    {
+        $this->message = $message;
+        return $this;
+    }
+    /**
+     * 设置推送平台
+     * @param $platform
+     * @return $this
+     */
+    function set_platform($platform)
+    {
+        $this -> platform = $platform;
+        return $this;
+    }
+
+    /**
+     * 设置 别名
+     * @param $alias
+     * @return $this
+     */
+    function set_alias($alias)
+    {
+        $this -> alias = $alias;
+        return $this;
+    }
+
+
+
+
+    /**
+     * 设置附加数据
+     * @param $extras
+     * @return $this
+     */
+    function set_extras($extras)
+    {
+        $this -> extras = $extras;
+        return $this;
+    }
+
+    /**
+     * 设置内容
+     * @param $content
+     * @return $this
+     */
+    function set_alert($alert)
+    {
+        $this -> alert = $alert;
+        return $this;
+    }
+
     /**
      * 推送
      */
     function push()
     {
-
-
-
-        HTTP::getInterface($this -> config) -> post($this -> api,[]);
+        return HTTP::getInterface($this -> config) -> post($this -> api,$this->build)->getBody()->getContents();;
     }
+
+
+    /**
+     * 设置安卓发送内容
+     * @param string $alert
+     * @param array $notification
+     * @return $this
+     */
+    function set_Androidbody()
+    {
+        $android = [];
+       if(isset($this -> title) && !empty($this -> title))
+       {
+           $android['title'] = $this->title;
+       }
+       if(isset($this -> extras) && !empty($this -> extras))
+       {
+           $android['extras'] = $this->extras;
+       }
+        $this -> Androidbody = $android;
+        return $this;
+
+    }
+
+
+    function set_iOSbody()
+    {
+        $ios = array();
+        $ios['alert'] = (is_string($this->alert) || is_array($this -> alert)) ? $this -> alert : '';
+
+        if(isset($this->extras) && !empty($this->extras))
+        {
+            $ios['extras'] = $this->extras;
+        }
+        if (!isset($ios['sound'])) {
+            $ios['sound'] = '';
+        }
+        if (!array_key_exists('badge', $ios)) {
+            $ios['badge'] = '+1';
+        }
+        $this -> iOSbody = $ios;
+        return $this;
+    }
+
+    /**
+     * 设置windowsphone
+     * @param $msg_content
+     * @param array $msg
+     * @return $this
+     */
+    function  set_Windowsbody()
+    {
+
+            $message = array();
+            $message['msg_content'] = isset($this -> alert)?$this->alert:'';
+           if(isset($this->title) && !empty($this->title))
+           {
+            $message['title'] = $this->title;
+           }
+           if(isset($this->extras) && !empty($this->extras))
+           {
+               $message['extras'] = $this->extras;
+           }
+            $this->Windowsbody = $message;
+
+        return $this;
+    }
+
+
+    public function setCid() {
+        $this->cid = date('YmdHis') . random(6, true);
+        return $this;
+    }
+    /**
+     * 数据内容构造器
+     * @return array
+     */
+    public function build() {
+        $payload = array();
+
+        // validate platform
+        if (is_null($this->platform)) {
+            throw new InvalidArgumentException("platform must be set");
+        }
+        $payload["platform"] = $this->platform;
+
+        if (!is_null($this->cid)) {
+            $payload['cid'] = $this->cid;
+        }
+        if($this->platform=='all')
+        {
+            $this->Windowsbody;
+            $this->iOSbody;
+            $this->Androidbody;
+        }
+        // validate audience
+        $audience = array();
+        if (!is_null($this->tags)) {
+            $audience["tag"] = $this->tags;
+        }
+
+        if (!is_null($this->alias)) {
+            $audience["alias"] = $this->alias;
+        }
+
+        if (is_null($this->audience) && count($audience) <= 0) {
+            throw new InvalidArgumentException("audience must be set");
+        } else if (!is_null($this->audience) && count($audience) > 0) {
+            throw new InvalidArgumentException("you can't add tags/alias/registration_id/tag_and when audience='all'");
+        } else if (is_null($this->audience)) {
+            $payload["audience"] = $audience;
+        } else {
+            $payload["audience"] = $this->audience;
+        }
+
+
+        // validate notification
+        $notification = array();
+
+        if (!is_null($this -> alert)) {
+            $notification['alert'] = $this -> alert;
+        }
+
+        if (!is_null($this->Androidbody)) {
+            $notification['android'] = $this->Androidbody;
+            if (is_null($this->Androidbody['alert'])) {
+                if (is_null($this->alert)) {
+                    throw new InvalidArgumentException("Android alert can not be null");
+                } else {
+                    $notification['android']['alert'] = $this->alert;
+                }
+            }
+        }
+
+        if (!is_null($this->iOSbody)) {
+            $notification['ios'] = $this->iOSbody;
+            if (is_null($this->iOSbody['alert'])) {
+                if (is_null($this->alert)) {
+                    throw new InvalidArgumentException("iOS alert can not be null");
+                } else {
+                    $notification['ios']['alert'] = $this->alert;
+                }
+            }
+        }
+
+        if (!is_null($this->Windowsbody)) {
+            $notification['winphone'] = $this->Windowsbody;
+            if (is_null($this->Windowsbody['alert'])) {
+                if (is_null($this->Windowsbody)) {
+                    throw new InvalidArgumentException("WinPhone alert can not be null");
+                } else {
+                    $notification['winphone']['alert'] = $this->alert;
+                }
+            }
+        }
+
+        if (count($notification) > 0) {
+            $payload['notification'] = $notification;
+        }
+
+        if (!is_null($this->message)) {
+            $payload['message'] = $this->message;
+        }
+        if (!array_key_exists('notification', $payload) && !array_key_exists('message', $payload)) {
+            throw new InvalidArgumentException('notification and message can not all be null');
+        }
+
+
+        if (is_null($this->options)) {
+            $this->options();
+        }
+
+        $payload['options'] = $this->options;
+
+        return $payload;
+    }
+
 
 
 

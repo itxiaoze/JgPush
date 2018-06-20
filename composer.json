@@ -1,0 +1,17 @@
+{
+    "name": "xiaoze/jg_push",
+    "description": "极光p推送",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "小泽",
+            "email": "xiaoze@qq.com"
+        }
+    ],
+    "require": {
+        "guzzlehttp/guzzle": "^6.3"
+    },
+    "autoload": {
+        "psr-4": { "Xiaoze\\JgPush\\": "./src" }
+    }
+}

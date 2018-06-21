@@ -293,6 +293,7 @@ class Push
         $audience = array();
 
         if (!is_null($this->alias)) {
+            $this-> audience = null;
             $audience["alias"] = $this->alias;
         }
         if (is_null($this->audience) && count($audience) <= 0) {
@@ -304,8 +305,6 @@ class Push
         } else {
             $payload["audience"] = $this->audience;
         }
-
-
         // validate notification
         $notification = array();
 

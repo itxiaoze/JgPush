@@ -13,5 +13,9 @@
     },
     "autoload": {
         "psr-4": { "Xiaoze\\JgPush\\": "./src" }
-    }
+    },
+  "config": {
+    "sort-packages": true
+  },
+  "minimum-stability": "dev"
 }
